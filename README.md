@@ -3,6 +3,25 @@
 
 ## 第一天
 
+#### 命名规范
+
+```
+类名 首字母大写，单词和单词之间首字母大写
+函数名 变量名称 首字母小写，单词和单词之间首字母大写
+```
+
+#### 快捷键
+
+```c++
+快捷键
+注释 ctrl + /
+运行 ctrl + r
+编译 ctrl + b
+整行移动 ctrl + shift + ↑
+自动对齐 ctrl + i
+同名之间.h和.cpp切换 F4
+```
+
 #### 添加一个按钮
 
 在头文件中引用
@@ -14,15 +33,42 @@
 在Widget::Widger()的构造函数中创建
 
 ~~~c++
-QPushbutton *btn = new QPushbutton("First_button",this)
+QPushbutton *btn = new QPushbutton("First_button",this);
 //创建一个名叫btn的按钮，按钮上显示“First_button”，按钮位于this窗口(也就是主窗口中)
+~~~
+
+重设按钮位置
+
+~~~c++
+btn->move(100,0)
+//将按钮btn的位置坐标设为(100,0)
+~~~
+
+#### 添加一个窗体
+
+~~~c++
+QWidget win1 = new QWidget;
+~~~
+
+设置固定窗口大小
+
+~~~c++
+win1->setFixedSize(600,400);
+//将固定窗口大小设置为600*400
 ~~~
 
 重设窗口大小
 
 ~~~c++
-this->resize(600,400)
-//将主窗口的大小设置为600*400
+win1->resize(400,600);
+//重设窗口大小为400*600
+~~~
+
+设置窗口标题
+
+~~~c++
+win1->setWindowTitle("MyFirstWindow");
+//将窗口标题设置为“MyFirstWindow”
 ~~~
 
 ## 第二天
@@ -396,5 +442,92 @@ void Student::treat(QString foodName)
     //先转为QByteArray ( .toUtf8() ) 再用.data()转为char*
     qDebug()<<"请老师吃"<<foodName.toUtf8().data();
 }
+~~~
+
+## 第三天
+
+#### 关于信号和槽的知识点概括
+
+```
+1、信号是可以连接信号的
+2、一个信号可以连接多个槽函数
+3、多个信号可以连接同一个槽函数
+4、信号和槽函数的参数类型必须一一对应
+5、信号和槽的参数个数 是不是要一致？信号的参数个数可以多于槽函数个数
+```
+
+```
+QT4版本以前的信号和槽连接方式
+    //利用QT4信号槽 连接无参版本
+    connect(zt,SIGNAL(hungry()),st,SLOT(treat()));
+    //QT4版本优点：参数直观 ， 缺点：类型不做检测
+```
+
+#### Lambda表达式
+
+主要语法：
+
+~~~
+[](){}
+中括号、小括号、大括号。一般中括号里填 = ，小括号里不填，大括号里写函数体
+~~~
+
+且看例子
+
+```c++
+//新建一个按钮，用lambda表达式实现点击事件
+
+    QPushButton *btn2 = new QPushButton("关闭",this);
+    btn2->move(100,0);
+    connect(btn2,&QPushButton::clicked,this,[=](){
+         emit zt->hungry("宫保鸡丁");
+    });
+    //如果第三参数是this，第四个参数是lambda表达式，可以省略this
+```
+
+#### 前几天的小练习
+
+```
+需求:有一个按钮open，按下时会显示一个子窗口，同时按钮变成"close"，按下会关闭子窗口
+```
+
+代码
+
+~~~c++
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+
+
+    //需求:有一个按钮open，按下时会显示一个子窗口，同时按钮变成"close"，按下会关闭子窗口
+    //创建一个按钮
+    QPushButton *btn = new QPushButton("open",this);
+    //设置主窗体大小
+    this->resize(600,400);
+    //设置按钮父亲
+    btn->setParent(this);
+    //创建一个子窗口
+    QWidget *win = new QWidget;
+    //设置窗口名称
+    this->setWindowTitle("主窗口");
+    win->setWindowTitle("子窗口");
+    //连接
+    connect(btn,&QPushButton::clicked,win,[=](){
+        if(btn->text()=="open")
+        {
+            win->show();
+            btn->setText("close");
+        }
+        else
+        {
+            win->close();
+            btn->setText("open");
+        }
+    });
+}
+
 ~~~
 
