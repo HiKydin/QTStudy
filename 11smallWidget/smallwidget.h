@@ -14,7 +14,10 @@ class SmallWidget : public QWidget
 public:
     explicit SmallWidget(QWidget *parent = nullptr);
     ~SmallWidget();
-
+    //设置数值
+    void setNum(int num);
+    //获取数值
+    int getNum();
 private:
     Ui::SmallWidget *ui;
 };

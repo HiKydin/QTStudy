@@ -531,3 +531,310 @@ Widget::Widget(QWidget *parent)
 
 ~~~
 
+## 第四天
+
+#### MainWindow的创建
+
+mainwindow可以添加工具栏、菜单栏
+
+~~~c++
+//菜单栏  最多只能有一个
+    //菜单栏的创建
+    QMenuBar *bar = menuBar();
+    //将菜单栏放置到窗口中
+    setMenuBar(bar);
+
+    //创建菜单
+    QMenu *fileMenu = bar->addMenu("文件");
+    QMenu *editMenu = bar->addMenu("编辑");
+
+    //创建菜单项
+    fileMenu->addAction("新建");
+    //添加分隔符
+    fileMenu->addSeparator();
+    fileMenu->addAction("打开");
+
+    //工具栏 可以有多个
+    QToolBar * toolBar = new QToolBar(this);
+    addToolBar(Qt::LeftToolBarArea,toolBar);
+
+    //设置是否可以浮动
+    toolBar->setFloatable(false);
+
+    //设置只允许左右停靠
+    toolBar->setAllowedAreas(Qt::LeftToolBarArea | Qt::RightToolBarArea);
+    //工具栏中可以设置内容
+    toolBar->addAction(fileMenu);
+~~~
+
+#### Qt中资源文件的添加
+
+为什么要添加资源文件？
+
+~~~c++
+如果我们需要在程序中添加一个Icon文件：
+ui->actionnew->setIcon(QIcon("路径"))
+很容易看出，当别人下载运行我们的程序的时候，每个人的路径都是不一样的，所以无法确保Icon文件的正常使用。因此，我们需要引用Qt中的资源文件。
+~~~
+
+在Qt中使用资源文件有如下步骤：
+
+* 将本地资源文件复制到Qt项目的工程目录下
+* 点击当前工程目录，Add New...
+* 选择Qt-Qt Resource File ，会生成res.qrc文件
+* 点击res.qrc文件，添加前缀，一般使用"/"
+* 然后添加文件，将同目录下的资源文件添加到res中
+
+~~~
+    //使用添加Qt资源 : 前缀名 + 文件名
+    ui->actionnew->setIcon(QIcon(":/Image/new.png"));
+    ui->actionopen->setIcon(QIcon(":/Image/edit.png"));
+~~~
+
+#### Dialog对话框的使用
+
+对话框的分类：模态对话框和非模态对话框
+
+* 模态对话框：不可以对其他窗口进行操作
+* 非模态对话框：可以对其他窗口进行操作
+
+~~~c++
+//点击新建按钮，弹出一个对话框
+connect(ui->actionnew,&QAction::triggered,[=](){
+    //...创建对话框
+}；
+~~~
+
+
+
+模态创建 阻塞
+
+~~~c++
+//在主窗口创建一个对话框
+QDialog dlg(this);
+//设置对话框大小为200*100
+dlg.resize(200,100);
+//显示对话框（阻塞）
+dlg.exec();
+~~~
+
+非模态对话框
+
+~~~c++
+QDialog dlg2(this);
+//非模态显示
+dlg2.show();
+~~~
+
+我们会发现，dlg2对话框一闪而过就消失了，是因为在匿名函数中，dlg2在栈上，执行完`dlg2.show()`就被释放了
+
+~~~c++
+//在堆上创建
+QDialog * dlg3 = new QDialog(this);
+dlg3->resize(200,100);
+dlg3->setAttribute(Qt::WA_DeleteOnClose);//设置属性：在被关闭时释放对象
+dlg3->show();
+~~~
+
+#### 消息对话框
+
+##### 错误对话框
+
+~~~c++
+QMessageBox::critical(this,"critical","错误");
+~~~
+
+##### 信息对话框
+
+~~~c++
+QMessageBox::information(this,"information","信息");
+~~~
+
+##### 问题对话框
+
+~~~c++
+QMessageBox::question(this,"question","问题",QMessageBox::Save|QMessageBox::Cancel,QMessageBox::Cancel)
+~~~
+
+如果要接收用户的选项：
+
+~~~c++
+//参数1 父亲 参数2 标题 参数3 提示内容 参数4 按键类型 参数5 默认关联回车的按键
+if(QMessageBox::Save == QMessageBox::question(this,"question","问题",QMessageBox::Save|QMessageBox::Cancel,QMessageBox::Cancel))
+{
+     qDebug()<<"选择的是保存";
+}
+else
+{
+     qDebug()<<"选择的是取消";
+}
+~~~
+
+##### 警告对话框
+
+```c++
+QMessageBox::warning(this,"warning","警告");
+```
+
+## 第五天
+
+#### 控件
+
+##### 单选框
+
+~~~c++
+//设置按钮男默认被选中
+ui->rBtnMan->setChecked(true);
+~~~
+
+~~~c++
+//选中女后打印信息
+connect(ui->rBtnWoman,&QRadioButton::clicked,[=](){
+        qDebug()<<"选择了女";
+});
+~~~
+
+##### 多选框
+
+```c++
+//多选按钮  2是选择 0是未选中
+connect(ui->cBox,&QCheckBox::stateChanged,[=](){
+        qDebug()<<"选择3";
+});
+```
+
+##### 列表框
+
+```c++
+//利用listWidget写一首诗
+//QListWidgetItem *item = new QListWidgetItem("锄禾日当午");
+//将一行诗放入到QListWidgetItem
+ui->listWidget->addItem(item);
+item->setTextAlignment(Qt::AlignHCenter);
+
+//QStringList  QList<QString>
+QStringList list ;
+list << "锄禾日当午" << "汗滴禾下土";
+ui->listWidget->addItems(list);
+```
+
+#### Tree控件
+
+```c++
+ //设置水平头
+    ui->treeWidget->setHeaderLabels(QStringList()<<"英雄"<<"英雄介绍");
+
+	QTreeWidgetItem * liitem = new QTreeWidgetItem(QStringList()<<"力量");
+    QTreeWidgetItem * mingitem = new QTreeWidgetItem(QStringList()<<"敏捷");
+    QTreeWidgetItem * zhiitem = new QTreeWidgetItem(QStringList()<<"智力");
+//添加顶部节点
+    ui->treeWidget->addTopLevelItem(liitem);
+    ui->treeWidget->addTopLevelItem(mingitem);
+    ui->treeWidget->addTopLevelItem(zhiitem);
+
+//添加子节点
+    QStringList lihero1;
+    lihero1<<"gangbeizhu"<<"henrou";
+    QTreeWidgetItem *l1 = new QTreeWidgetItem(lihero1);
+    liitem->addChild(l1);
+
+```
+
+##### TableWidget
+
+```c++
+    //TableWidget
+    //设置列数
+    ui->tableWidget->setColumnCount(3);
+    //设置水平表头
+    ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"name"<<"gender"<<"age");
+    //设置行数
+    ui->tableWidget->setRowCount(5);
+    //设置正文
+    ui->tableWidget->setItem(0,0,new QTableWidgetItem("张三"));
+
+
+    QStringList namelist;
+    namelist<<"张三"<<"李四"<<"王五"<<"赵六"<<"田七";
+    QList<QString> sexlist;
+    sexlist<<"男"<<"女"<<"男"<<"女"<<"男";
+
+    //循环填表
+    for(int i=0;i<5;i++)
+    {
+        int cnt=0;
+        ui->tableWidget->setItem(i,cnt++,new QTableWidgetItem(namelist[i]));
+        ui->tableWidget->setItem(i,cnt++,new QTableWidgetItem(sexlist.at(i)));
+        ui->tableWidget->setItem(i,cnt++,new QTableWidgetItem(QString::number(i+18)));
+    }
+```
+
+##### StackedWidget
+
+可以通过按钮控制显示的界面
+
+```c++
+    //StackedWidget
+    //设置默认显示界面 scrollArea
+        ui->stackedWidget->setCurrentIndex(0);
+    //scrollArea
+    connect(ui->btn_ScrollArea,&QPushButton::clicked,[=](){
+        ui->stackedWidget->setCurrentIndex(0);
+    });
+    //tabwidget
+    connect(ui->btn_TabWidget,&QPushButton::clicked,[=](){
+        ui->stackedWidget->setCurrentIndex(1);
+    });
+    //toolbox
+    connect(ui->btnToolBox,&QPushButton::clicked,[=](){
+        ui->stackedWidget->setCurrentIndex(2);
+    });
+```
+
+##### 下拉框
+
+```c++
+    //下拉框
+    ui->comboBox->addItem("男");
+    ui->comboBox->addItem("女");
+
+    connect(ui->btn_choose,&QPushButton::clicked,[=](){
+        ui->comboBox->setCurrentIndex(1);
+    });
+```
+
+##### Label
+
+```c++
+    //使用 QLabel显示图片
+    ui->lbl_Image->setPixmap(QPixmap(":/Image/edit.png"));
+```
+
+#### 自定义控件
+
+要设置Qt中的自定义控件，需要在当前项目中新建一个Qt设计师界面类，选择空窗口。然后在该窗口中绘制需要的控件。
+
+```c++
+//QSpinBox移动 QSlider跟着移动
+    void(QSpinBox:: * spSingnal)(int) = &QSpinBox::valueChanged;
+    connect(ui->spinBox,spSingnal,ui->horizontalSlider,&QSlider::setValue);
+
+    //QSlider移动 QSpinBox跟着移动
+    connect(ui->horizontalSlider,&QSlider::valueChanged,ui->spinBox,&QSpinBox::setValue);
+```
+
+可以定义接口出来
+
+```c++
+//设置数值
+void SmallWidget::setNum(int num)
+{
+    ui->spinBox->setValue(num);
+}
+//获取数值
+int SmallWidget::getNum()
+{
+    return ui->spinBox->value();
+}
+
+```

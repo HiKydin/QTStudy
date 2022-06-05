@@ -8,21 +8,22 @@ Widget::Widget(QWidget *parent)
     ui->setupUi(this);
 
     //TableWidget
-    //set lieshu
+    //设置列数
     ui->tableWidget->setColumnCount(3);
-    //set shuipingbiaotou
+    //设置水平表头
     ui->tableWidget->setHorizontalHeaderLabels(QStringList()<<"name"<<"gender"<<"age");
-    //set hangshu
+    //设置行数
     ui->tableWidget->setRowCount(5);
-    //set zhengwen
-    ui->tableWidget->setItem(0,0,new QTableWidgetItem("zs"));
+    //设置正文
+    ui->tableWidget->setItem(0,0,new QTableWidgetItem("张三"));
 
 
     QStringList namelist;
-    namelist<<"11"<<"22"<<"33"<<"44"<<"55";
+    namelist<<"张三"<<"李四"<<"王五"<<"赵六"<<"田七";
     QList<QString> sexlist;
-    sexlist<<"nan"<<"nv"<<"nan"<<"nv"<<"nan";
+    sexlist<<"男"<<"女"<<"男"<<"女"<<"男";
 
+    //循环填表
     for(int i=0;i<5;i++)
     {
         int cnt=0;
