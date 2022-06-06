@@ -1113,3 +1113,156 @@ bool Widget::eventFilter(QObject * obj,QEvent * e)
 }
 ```
 
+## 第七天
+
+#### 绘图事件
+
+要在Qt中使用绘图事件，要在widget.h中添加
+
+```c++
+ //绘图事件
+    void paintEvent(QPaintEvent *);
+```
+
+然后在widget.cpp中实现即可
+
+首先来画一条直线
+
+```c++
+//实例化画家类 this指定的是绘图的设备
+    QPainter painter(this);
+//画直线
+    painter.drawLine(QPoint(0,0),QPoint(100,100));
+```
+
+```c++
+	//画 圆/椭圆
+    painter.drawEllipse(QPoint(100,100),50,50);
+
+    //画矩形
+    painter.drawRect(100,100,20,30);
+    painter.drawRect(QRect(20,20,50,50));
+
+    //画文字
+    painter.drawText(QRect(10,200,150,50),"好好学习，天天向上");
+```
+
+如果要让图画更加美观，可以设置画笔和画刷
+
+```c++
+    //设置画笔
+    QPen pen(QColor(255,0,0));
+
+    //设置画笔宽度
+    pen.setWidth(3);
+
+    //设置画笔风格
+    pen.setStyle(Qt::DotLine);
+
+    //让画家使用这个笔
+    painter.setPen(pen);
+
+    //设置画刷
+    //QBrush brush(QColor(0,255,0));
+    QBrush brush(Qt::green);
+    
+    //设置画刷的风格
+    brush.setStyle(Qt::Dense7Pattern);
+
+    //让画家使用画刷
+    painter.setBrush(brush);
+```
+
+注意，设置画笔和画刷应该在画图前。
+
+#### 高级绘图
+
+```c++
+ 	QPainter painter2(this);
+	//不设置抗锯齿
+    painter2.drawEllipse(QPoint(200,200),50,50);
+    //设置 抗锯齿能力 效率低
+    painter2.setRenderHint(QPainter::Antialiasing);
+    painter2.drawEllipse(QPoint(300,200),50,50);
+```
+
+设置抗锯齿可以让图片看起来更清晰。
+
+```c++
+	//画矩形
+    painter2.drawRect(QRect(200,200,50,50));
+
+    //移动画家
+    painter2.translate(100,0);
+
+    //保存画家状态
+    painter2.save();
+	
+	//画矩形
+    painter2.drawRect(QRect(200,200,50,50));
+
+    //还原画家保存状态
+    painter.restore();
+```
+
+我们可以看到，本来应该重合的矩形，通过移动画家的相对位置，使它们没有重合
+
+#### 画资源图片
+
+```c++
+ 	QPainter painter3(this);
+    painter3.drawPixmap(50,100,QPixmap(":/Image/edit.png"));
+```
+
+我们可以添加一个按钮，每当按一下按钮，图片向右移动20px。
+
+在头文件定义一个`posX=0`,代表x坐标
+
+```c++
+    QPainter painter3(this);
+    //painter3.drawPixmap(50,100,QPixmap(":/Image/edit.png"));
+
+    //点击移动按钮，移动图片
+    if(posX>this->width())
+    {
+        posX=0;
+    }
+    painter3.drawPixmap(posX,100,QPixmap(":/Image/edit.png"));
+```
+
+#### 课后作业
+
+需求：使用绘图事件绘制一张资源图片，每隔1s向右移动20px，当图片超过窗体时，实现跑马灯效果。
+
+```c++
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    //需求：图片跑马灯
+
+    QTimer *timer = new QTimer(this);
+
+    timer->start(1000);
+
+    connect(timer,&QTimer::timeout,[=](){
+        posX+=20;
+        update();
+    });
+}
+
+void Widget::paintEvent(QPaintEvent *)
+{
+    //新建一个画家
+    QPainter painter(this);
+    //画图
+    if(posX>this->width())
+    {
+        posX=0;
+    }
+    painter.drawPixmap(posX,100,QPixmap(":/Image/new.png"));
+}
+
+```
