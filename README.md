@@ -838,3 +838,278 @@ int SmallWidget::getNum()
 }
 
 ```
+
+## 第六天
+
+#### Qt中的事件
+
+设置鼠标事件，添加头文件
+
+~~~c++
+#include<QMouseEvent>
+~~~
+
+需求：设置一个Label控件，当鼠标进入和离开时分别输出
+
+在自定义控件Label.h中添加以下公有函数
+
+~~~c++
+    //鼠标进入事件
+    void enterEvent(QEvent *event);
+
+    //鼠标离开事件
+    void leaveEvent(QEvent *);
+~~~
+
+在label.cpp中实现
+
+```c++
+//鼠标进入事件
+void Mylabel::enterEvent(QEvent *event)
+{
+    //qDebug()<<"鼠标进入了";
+}
+
+//鼠标离开事件
+void Mylabel::leaveEvent(QEvent *)
+{
+    //qDebug()<<"鼠标离开了";
+}
+```
+
+这样最简单的鼠标进入、离开事件就写好了
+
+同时，我们还可以添加鼠标的点击、释放、移动事件
+
+```c++
+//鼠标按下
+virtual void mousePressEvent(QMouseEvent *ev);
+//鼠标释放
+virtual void mouseReleaseEvent(QMouseEvent *ev);
+//鼠标移动
+virtual void mouseMoveEvent(QMouseEvent *ev);
+```
+
+```c++
+//鼠标按下
+void Mylabel::mousePressEvent(QMouseEvent *ev)
+{
+	qDebug()<<"鼠标按下了";
+}
+
+//鼠标释放
+void Mylabel::mouseReleaseEvent(QMouseEvent *ev)
+{
+    qDebug()<<"鼠标释放了";
+}
+//鼠标移动
+void Mylabel::mouseMoveEvent(QMouseEvent *ev)
+{
+    qDebug()<<"鼠标移动了";
+}
+```
+
+好，再接下来，我们可以做一些额外的输出内容，比如输出鼠标按下/释放/移动的坐标。那么，鼠标的坐标信息储存在哪里呢？
+
+通过QMouseEvent *ev中我们可以找到许多信息，其中就包含我们需要的坐标信息。
+
+~~~c++
+//鼠标按下
+void Mylabel::mousePressEvent(QMouseEvent *ev)
+{
+    //Qt中的格式化输出
+    QString str = QString("鼠标按下了 x=%1 y=%2").arg(ev->x()).arg(ev->y());
+	qDebug()<<str;
+}
+
+//鼠标释放
+void Mylabel::mouseReleaseEvent(QMouseEvent *ev)
+{
+    //Qt中的格式化输出
+    QString str = QString("鼠标释放了 x=%1 y=%2").arg(ev->x()).arg(ev->y());
+	qDebug()<<str;
+}
+//鼠标移动
+void Mylabel::mouseMoveEvent(QMouseEvent *ev)
+{
+    //鼠标移动是一个特殊的事件，不能向上面这样写
+    //联合按键 全真判断 &
+    if(ev->buttons() & Qt::LeftButton)
+    {
+        QString str = QString("鼠标移动了 x=%1 y=%2").arg(ev->x()).arg(ev->y());
+        qDebug()<<str;
+    }
+}
+~~~
+
+要注意，鼠标的移动是一个过程。因此我们需要使用联合按键，进行全真判断
+
+#### 事件分发器
+
+在自定义控件label.h中添加
+
+```c++
+    //通过event事件分发器 拦截 鼠标按下事件
+    bool event(QEvent *e);
+```
+
+```c++
+//通过event事件分发器 拦截 鼠标按下事件
+bool Mylabel::event(QEvent *e)
+{
+    //如果是鼠标按下，在event事件分发中设置拦截
+    if(e->type()==QEvent::MouseButtonPress)
+    {
+        //静态类型转换 static_cast<待转换的类型>(目标类型)
+        QMouseEvent *ev = static_cast<QMouseEvent*>(e);
+        QString str = QString("Event中 鼠标按下了 x=%1 y=%2").arg(ev->x()).arg(ev->y());
+        qDebug()<<str;
+
+        return true;//true代表用户自己处理
+    }
+
+    //其他事件 交给父类出来 默认处理
+    return QLabel::event(e);
+}
+
+```
+
+#### 定时器事件
+
+Qt中使用定时器有两种方式
+
+方式1，
+
+```c++
+ //定时器的第一种方式
+    QTimer * timer = new QTimer(this);
+    //启动定时器
+    timer->start(500);
+
+//将lbltimer3与定时器连接
+    connect(timer,&QTimer::timeout,[=](){
+        //lbltimer3每隔0.5秒+1
+        static int num = 1;
+        //要将int类型转换为QString类型
+        ui->lbltimer3->setText(QString::number(num++));
+    });
+```
+
+```c++
+    //点击暂停按钮实现停止定时器
+    connect(ui->btn,&QPushButton::clicked,[=](){
+       timer->stop();
+    });
+```
+
+方式2，
+
+在widget.h中添加：
+
+```c++
+    //重写定时器的事件
+    void timerEvent(QTimerEvent *ev);
+```
+
+在widget.cpp中实现
+
+```c++
+//重写定时器的事件
+void Widget::timerEvent(QTimerEvent *ev)
+{
+    //lblTimer每隔1秒+1
+    static int num = 1;
+    ui->lblTimer->setText(QString::number(num++));
+}
+```
+
+现在我们介绍了两种定时器的使用，那么，如果要同时使用两个定时器呢？
+
+对于方法1，同时使用两个定时器只需要new一个就行了。
+
+但是方法2操作就有点不同了，直接上代码
+
+在widget.h中添加：
+
+```c++
+    int id1;//定时器1的唯一标识
+    int id2;//定时器2的唯一表示
+```
+
+在widget.cpp中实现
+
+```c++
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    //启动定时器
+    //参数1 间隔 单位是毫秒
+    id1 = startTimer(1000);
+    id2 = startTimer(2000);
+
+}
+//重写定时器的事件
+void Widget::timerEvent(QTimerEvent *ev)
+{
+
+    if(ev->timerId()==id1)
+    {
+        //lblTimer每隔1秒+1
+        static int num = 1;
+        ui->lblTimer->setText(QString::number(num++));
+    }
+    if(ev->timerId()==id2)
+    {
+        //lbltimer2 每个2秒+1
+         static int num2 = 1;
+         ui->lbltimer2->setText(QString::number(num2++));
+    }
+}
+```
+
+#### 事件过滤器
+
+在widget.h中添加：
+
+```c++
+    //重写事件过滤器的事件
+    bool eventFilter(QObject * ,QEvent * );
+```
+
+在widget.cpp中实现
+
+```c++
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    //给lblTimer安装事件过滤器
+    //步骤1 安装事件过滤器
+    ui->lblTimer->installEventFilter(this);
+}
+//步骤2 重写 eventfilter
+bool Widget::eventFilter(QObject * obj,QEvent * e)
+{
+    if(obj == ui->lblTimer)
+    {
+        if(e->type() == QEvent::MouseButtonPress)
+        {
+            //静态类型转换 static_cast<待转换的类型>(目标类型)
+            QMouseEvent *ev = static_cast<QMouseEvent *>(e);
+            QString str = QString("事件过滤器中 鼠标按下了  x=%1  y=%2 gx=%3 gy=%4 ").arg(ev->x()).arg(ev->y()).arg(ev->globalX()).arg(ev->globalY());
+            qDebug()<<str;
+
+            return true;//true代表用户自己处理，不向下分发
+        }
+    }
+
+    //其他默认处理
+    return QWidget::eventFilter(obj,e);
+}
+```
+
