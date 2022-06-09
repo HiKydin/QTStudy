@@ -1266,3 +1266,200 @@ void Widget::paintEvent(QPaintEvent *)
 }
 
 ```
+
+## 第八天
+
+#### Pixmap绘图设备
+
+```c++
+    //创建300*300画布
+	QPixmap pix(300,300);
+
+    //填充颜色
+    pix.fill(Qt::white);
+
+    //声明画家
+    QPainter painter(&pix);
+    painter.setPen(QPen(Qt::green));
+    painter.drawEllipse(QPoint(150,150),100,100);
+
+    //保存
+    pix.save("C:\\");
+```
+
+#### QImage绘图设备
+
+```c++
+    //设置300*300画布，填充色白色
+    QImage img(300,300,QImage::Format_RGB32);
+    img.fill(Qt::white);
+
+    //声明画家
+    QPainter painter(&img);
+    painter.setPen(QPen(Qt::blue));
+    painter.drawEllipse(QPoint(150,150),100,100);
+
+    //保存
+    img.save("C:\\img.png");
+```
+
+QImage绘图设备可以对像素进行访问
+
+~~~c++
+    //在widget.h中定义绘图事件
+    void paintEvent(QPaintEvent *);
+~~~
+
+在widget.cpp中重写绘图事件
+
+```c++
+void Widget::paintEvent(QPaintEvent *)
+{  
+	//画家
+    QPainter painter(this);
+
+    //利用QImage 对像素进行修改
+    QImage img;
+    img.load(":/Image/edit.png");
+
+    //修改像素点
+    for(int i=50;i<100;i++)
+    {
+        for(int j=50;j<100;j++)
+        {
+            QRgb value = qRgb(255,0,0);
+            img.setPixel(i,j,value);
+        }
+    }
+    //画资源图片
+    painter.drawImage(0,0,img);
+}
+```
+
+#### QPicture绘图设备
+
+可以记录和重现绘图的指令
+
+```c++
+Widget::Widget(QWidget *parent)
+    : QWidget(parent)
+    , ui(new Ui::Widget)
+{
+    ui->setupUi(this);
+
+    //QPicture 绘图设备 可以记录和重现绘图的指令
+    QPicture pic;
+    QPainter painter;
+
+    painter.begin(&pic);    //开始往pic上画
+    painter.setPen(QPen(Qt::cyan));
+    painter.drawEllipse(QPoint(150,150),100,100);
+    painter.end();    //结束画画
+
+    //保存到磁盘
+    pic.save("C:\\pic.zt");
+
+}
+void Widget::paintEvent(QPaintEvent *)
+{
+    //重现QPicture的绘图指令
+    QPicture pic;
+    pic.load("C:\\pic.zt");
+    //画家
+    QPainter painter(this);
+    painter.drawPicture(0,0,pic);
+}
+```
+
+#### Qt中的文件读写
+
+##### 读文件
+
+在空窗体中绘制一个Line Edit 、一个按钮、一个Text Edit，
+
+实现：点击按钮时弹出文件对话框，选择文件后将路径显示在Line Edit中，并将文件内容输出到Text Edit中
+
+```c++
+ connect(ui->pushButton,&QPushButton::clicked,[=](){
+        QString path = QFileDialog::getOpenFileName(this,"打开文件","C:\\Users\\admin\\Desktop");
+        //将路径放入到lineEdit中
+        ui->lineEdit->setText(path);
+
+        //读取内容 放入到textEdit中
+        //QFile默认读的格式是UTF-8
+        QFile file(path); //参数就是读取文件的路径
+        //设置打开方式
+        file.open(QIODevice::ReadOnly);
+
+        QByteArray array = file.readAll();//全部读
+
+        //将读取到的数据 放入textEdit中
+        ui->textEdit->setText(array);
+
+        //对文件对象进行关闭
+        file.close();
+ });
+```
+
+如果要在读取文件的时候要按行读也可以：
+
+```c++
+	//按行读        
+	QByteArray array = file.readLine();
+	//一行一行读完
+    QByteArray array;
+    while(!file.atEnd())
+    {
+		array+=file.readLine();
+	}
+```
+
+如果目标文件编码格式不是UTF-8，需要使用`编码格式类`进行转码
+
+```c++
+ connect(ui->pushButton,&QPushButton::clicked,[=](){
+        QString path = QFileDialog::getOpenFileName(this,"打开文件","C:\\Users\\admin\\Desktop");
+        //将路径放入到lineEdit中
+        ui->lineEdit->setText(path);
+
+        //编码格式的类
+        QTextCodec * codec = QTextCodec::codecForName("gbk");
+
+        //读取内容 放入到textEdit中
+        QFile file(path); //参数就是读取文件的路径
+        //设置打开方式
+        file.open(QIODevice::ReadOnly);
+
+        QByteArray array = file.readAll();//全部读
+
+        //将读取到的数据 放入textEdit中
+        ui->textEdit->setText(array);
+
+        //转码
+        ui->textEdit->setText(codec->toUnicode(array));
+
+        //对文件对象进行关闭
+        file.close();
+});
+```
+
+##### 写文件
+
+```c++
+	//进行写文件
+	file.open(QIODevice::Append);//用追加的方式进行写
+	file.write("要写入的内容");
+	//对文件对象进行关闭
+	file.close();
+```
+
+##### FileInfo
+
+```c++
+	//要查看FileInfo的文件路径
+	QFileInfo info(path);
+	qDebug()<<"大小"<<info.size()<<"后缀名"<<info.suffix()<<"文件名称"<<info.fileName()<<"文件路径"<<info.path();
+	qDebug()<<"创建日期"<<info.created().toString("yyyy/MM/dd hh:mm:ss");
+	qDebug()<<"最后的修改日期"<<info.lastModified().toString("yyyy/MM/dd hh:mm:ss");
+```
+
