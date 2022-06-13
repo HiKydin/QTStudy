@@ -1463,3 +1463,215 @@ void Widget::paintEvent(QPaintEvent *)
 	qDebug()<<"最后的修改日期"<<info.lastModified().toString("yyyy/MM/dd hh:mm:ss");
 ```
 
+## 翻金币项目
+
+具体内容代码里已经写得很详细了，记录几个新知识
+
+#### 添加音频文件
+
+在.pro中
+
+```c++
+QT += core gui multimedia
+```
+
+加上multimedia模块。
+
+~~~c++
+头文件
+#include<QSound>
+~~~
+
+~~~c++
+QSound *startSound = new QSound(":/res/start.wav",this);
+startSound->play();
+~~~
+
+如果需要循环播放，可以在播放前加上
+
+~~~c++
+startSound->setLoops(-1);
+//参数为循环播放几次，-1为无限循环
+~~~
+
+#### 各个窗体保持位置一致
+
+~~~c++
+this->setGeometry(chooseScene->geometry());
+~~~
+
+####  延时
+
+点击按钮后延时进入选择关卡(让按钮动画显示完)
+
+~~~c++
+QTimer::singleShot(500,this,[=](){
+	//内容
+});
+~~~
+
+#### 图片缩放
+
+~~~
+pix = pix.scaled(缩放后的宽,缩放后的高);
+~~~
+
+#### 自定义信号监听返回按钮信号
+
+自定义信号只需要声明，不需要实现
+
+监听：
+
+~~~c++
+connect(chooseScene,&ChooseLevelScene::IamBack,[=](){
+	//操作
+});
+~~~
+
+发送：
+
+~~~c++
+emit this->IamBack();
+//发送自定义信号
+~~~
+
+
+
+#### 自行封装按钮类
+
+因为美观需要，我们要自己写按钮的构造函数
+
+~~~c++
+MyPushButton(QString Img1,QString Img2 = "");
+//有两个参数，第一个参数没有默认值，第二个参数设置默认值为空
+//是为了区分不同的按钮
+~~~
+
+#### 设置好看的按钮样式
+
+~~~c++
+//设置图片固定大小
+this->setFixedSize(pix.width(),pix.height());
+//设置不规则图片样式
+this->setStyleSheet("QPushButton{border:0px}");
+//设置图标
+this->setIcon(pix);
+//设置图标大小
+this->setIconSize(QSize(pix.width(),pix.height()));
+~~~
+
+#### 设置动画
+
+创建按钮弹跳动画
+
+按下：
+
+~~~c++
+//弹跳动画
+void MyPushButton::zoom1()
+{
+    //创建动画对象
+    QPropertyAnimation * animation = new QPropertyAnimation(this,"geometry");
+    //设置动画的事件间隔
+    animation->setDuration(200);
+    //起始位置
+    animation->setStartValue(QRect(this->x(),this->y(),this->width(),this->height()));
+    //结束位置
+    animation->setEndValue(QRect(this->x(),this->y()+10,this->width(),this->height()));
+    //设置曲线
+    animation->setEasingCurve(QEasingCurve::OutBounce);
+    //执行动画
+    animation->start();
+}
+~~~
+
+弹起只要反写就行
+
+#### 用一个for循环写出一个二维矩阵
+
+~~~c++
+for(int i=0;i<20;i++)
+{
+	//每一个的坐标是(i%4*x,i/4*x)
+	//x为一个你需要的数
+}
+~~~
+
+#### 局部对象指针
+
+```c++
+            //进入到游戏场景
+            this->hide();
+            play = new PlayScene(i+1);
+
+            //设置游戏场景初始位置
+            play->setGeometry(this->geometry());
+            //显示窗口
+            play->show();
+            connect(play,&PlayScene::IamBack,[=](){
+                this->setGeometry(play->geometry());
+                this->show();
+                delete play;
+                play=NULL;
+            });
+        });
+```
+
+#### 鼠标穿透
+
+```c++
+        //设置label上的文字对齐方式 水平居中和垂直居中
+        lbl->setAlignment(Qt::AlignHCenter | Qt::AlignVCenter);
+        //设置鼠标穿透
+        lbl->setAttribute(Qt::WA_TransparentForMouseEv
+```
+
+#### 设置字体
+
+```c++
+	QFont font;
+    font.setFamily("微软雅黑");
+    font.setPixelSize(30);
+    lbl->setFont(font);
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
