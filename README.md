@@ -1371,6 +1371,24 @@ void Widget::paintEvent(QPaintEvent *)
 }
 ```
 
+#### QImage和QPixmap的转换
+
+因为QPixmap是针对平台优化的，QImage是不分平台的，所以我们传输时一般使用QImage，绘图时使用QPixmap。
+
+~~~c++
+//将QPixmap转为QImage
+QPixmap pix;
+pix.load("路径");
+QIamge tempImage = pix.toImage(); 
+~~~
+
+~~~c++
+//将QImage转为QPixmap
+QImage img;
+img.load("路径");
+QPixmap pix = QPixmap::fromImage(img);
+~~~
+
 #### Qt中的文件读写
 
 ##### 读文件
